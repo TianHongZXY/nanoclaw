@@ -1,0 +1,19 @@
+applied_skills:
+  - applied_at: 2026-02-27T23:27:59.657Z
+    file_hashes:
+      src/channels/telegram.test.ts: eb6b895296082e2911838347a2e1eb983a0090326d71f4e3f30a6ea2dc41a851
+      src/channels/telegram.ts: 6d4e4a711942f62c961e954dda865e13e1d11576e389419c8b844c541e745c36
+      src/config.ts: 6d4544c7b0993ddca971dfd10ac8fc0a2101d9116e7cd9fd759df2fd9afe78f2
+      src/index.ts: a7059d0a4cab52f9710c28f4be13c6ca04bbd66f56aac148914ba6911957439e
+      src/routing.test.ts: 9269a04663c2acb5538a0770d352bf2ae83900af5a54aa9a696ff15e2be9146a
+    name: telegram
+    structured_outcomes:
+      env_additions:
+        - TELEGRAM_BOT_TOKEN
+        - TELEGRAM_ONLY
+      npm_dependencies:
+        grammy: ^1.39.3
+      test: npx vitest run src/channels/telegram.test.ts
+    version: 1.0.0
+core_version: 1.1.3
+skills_system_version: 0.1.0

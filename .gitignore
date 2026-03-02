@@ -9,14 +9,22 @@ store/
 data/
 logs/
 
-# Groups - only track base structure and specific CLAUDE.md files
+# Groups - track CLAUDE.md memory and all files Andy creates (except logs)
 groups/*
 !groups/main/
 !groups/global/
-groups/main/*
-groups/global/*
+groups/main/logs/
+groups/global/logs/
 !groups/main/CLAUDE.md
 !groups/global/CLAUDE.md
+!groups/main/*.md
+!groups/main/*.json
+!groups/main/*.py
+!groups/main/*.txt
+!groups/main/*.sh
+groups/main/.gmail_config
+!groups/global/*.md
+!groups/global/*.json
 
 # Secrets
 *.keys.json
@@ -29,7 +37,8 @@ groups/global/*
 .idea/
 .vscode/
 
-# Skills system (local per-installation state)
-.nanoclaw/
+# Skills system - track state (which skills are applied) but not locks/tmp
+.nanoclaw/*
+!.nanoclaw/state.yaml
 
 agents-sdk-docs
