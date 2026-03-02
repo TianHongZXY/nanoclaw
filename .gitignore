@@ -23,6 +23,13 @@ groups/global/logs/
 !groups/main/*.txt
 !groups/main/*.sh
 groups/main/.gmail_config
+# Twitter — files with hardcoded secrets or session tokens
+groups/main/.twitter_api_config
+groups/main/.twitter_config
+groups/main/.twitter_cookies.json
+groups/main/.twitter_session.json
+groups/main/twitter.sh
+groups/main/twitter_bot.py
 !groups/global/*.md
 !groups/global/*.json
 
