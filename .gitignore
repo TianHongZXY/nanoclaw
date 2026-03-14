@@ -13,10 +13,16 @@ logs/
 groups/*
 !groups/main/
 !groups/global/
+!groups/discord-main/
+!groups/discord-private/
 groups/main/logs/
 groups/global/logs/
+groups/discord-main/logs/
+groups/discord-private/logs/
 !groups/main/CLAUDE.md
 !groups/global/CLAUDE.md
+!groups/discord-main/CLAUDE.md
+!groups/discord-private/CLAUDE.md
 !groups/main/*.md
 !groups/main/*.json
 !groups/main/*.py
@@ -30,6 +36,11 @@ groups/main/.twitter_cookies.json
 groups/main/.twitter_session.json
 groups/main/twitter.sh
 groups/main/twitter_bot.py
+groups/main/get_tweet_links.py
+# Large workspace dirs created by Andy
+groups/main/conversations/
+groups/main/nanoclaw/
+groups/main/ttt_jax_vs_pytorch/
 !groups/global/*.md
 !groups/global/*.json
 

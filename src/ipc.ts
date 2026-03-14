@@ -5,6 +5,7 @@ import { CronExpressionParser } from 'cron-parser';
 
 import {
   DATA_DIR,
+  GROUPS_DIR,
   IPC_POLL_INTERVAL,
   MAIN_GROUP_FOLDER,
   TIMEZONE,
@@ -17,6 +18,8 @@ import { RegisteredGroup } from './types.js';
 
 export interface IpcDeps {
   sendMessage: (jid: string, text: string) => Promise<void>;
+  sendFile?: (jid: string, filePath: string, filename?: string) => Promise<void>;
+  reactToMessage?: (jid: string, messageId: string, emoji: string) => Promise<void>;
   registeredGroups: () => Record<string, RegisteredGroup>;
   registerGroup: (jid: string, group: RegisteredGroup) => void;
   syncGroupMetadata: (force: boolean) => Promise<void>;
@@ -170,6 +173,12 @@ export async function processTaskIpc(
     trigger?: string;
     requiresTrigger?: boolean;
     containerConfig?: RegisteredGroup['containerConfig'];
+    // For send_file
+    filePath?: string;
+    filename?: string;
+    // For add_reaction
+    messageId?: string;
+    emoji?: string;
   },
   sourceGroup: string, // Verified identity from IPC directory
   isMain: boolean, // Verified from directory path
@@ -380,6 +389,52 @@ export async function processTaskIpc(
         );
       }
       break;
+
+    case 'send_file': {
+      // filePath is relative to /workspace/group/ inside the container
+      // Map to groups/{folder}/ on the host
+      if (!data.chatJid || !data.filePath) {
+        logger.warn({ data }, 'send_file missing chatJid or filePath');
+        break;
+      }
+      const targetGroup = registeredGroups[data.chatJid];
+      if (!targetGroup) {
+        logger.warn({ chatJid: data.chatJid }, 'send_file: target group not registered');
+        break;
+      }
+      // Authorization: non-main groups can only send files for their own JID
+      if (!isMain && targetGroup.folder !== sourceGroup) {
+        logger.warn({ sourceGroup, targetGroup: targetGroup.folder }, 'Unauthorized send_file attempt blocked');
+        break;
+      }
+      const hostFilePath = path.join(GROUPS_DIR, targetGroup.folder, data.filePath);
+      if (deps.sendFile) {
+        await deps.sendFile(data.chatJid, hostFilePath, data.filename);
+        logger.info({ chatJid: data.chatJid, hostFilePath }, 'File sent via IPC');
+      } else {
+        logger.warn('sendFile not supported by any connected channel');
+      }
+      break;
+    }
+
+    case 'add_reaction': {
+      if (!data.chatJid || !data.messageId || !data.emoji) {
+        logger.warn({ data }, 'add_reaction missing chatJid, messageId, or emoji');
+        break;
+      }
+      const targetGroup = registeredGroups[data.chatJid];
+      if (!isMain && (!targetGroup || targetGroup.folder !== sourceGroup)) {
+        logger.warn({ sourceGroup, chatJid: data.chatJid }, 'Unauthorized add_reaction attempt blocked');
+        break;
+      }
+      if (deps.reactToMessage) {
+        await deps.reactToMessage(data.chatJid, data.messageId, data.emoji);
+        logger.info({ chatJid: data.chatJid, messageId: data.messageId, emoji: data.emoji }, 'Reaction added via IPC');
+      } else {
+        logger.warn('reactToMessage not supported by any connected channel');
+      }
+      break;
+    }
 
     default:
       logger.warn({ type: data.type }, 'Unknown IPC task type');

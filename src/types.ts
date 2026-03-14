@@ -87,6 +87,10 @@ export interface Channel {
   disconnect(): Promise<void>;
   // Optional: typing indicator. Channels that support it implement it.
   setTyping?(jid: string, isTyping: boolean): Promise<void>;
+  // Optional: send a file. filePath is an absolute path on the host.
+  sendFile?(jid: string, filePath: string, filename?: string): Promise<void>;
+  // Optional: react to a message with an emoji.
+  reactToMessage?(jid: string, messageId: string, emoji: string): Promise<void>;
 }
 
 // Callback type that channels use to deliver inbound messages

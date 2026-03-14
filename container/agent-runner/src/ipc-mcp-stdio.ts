@@ -280,6 +280,83 @@ Use available_groups.json to find the JID for a group. The folder name should be
   },
 );
 
+server.tool(
+  'send_file',
+  `Send a file from your workspace to the user's chat. The file must exist at the given path.
+
+The filePath is relative to /workspace/group/ (e.g., "reports/summary.pdf", "downloads/result.png").
+You can also use an absolute path inside /workspace/group/ (e.g., "/workspace/group/reports/summary.pdf").
+
+This works on channels that support file sending (e.g., Discord). On unsupported channels, it will fail gracefully.`,
+  {
+    file_path: z.string().describe('Path to the file, relative to /workspace/group/ or absolute within it'),
+    filename: z.string().optional().describe('Optional display filename (defaults to the file basename)'),
+    target_jid: z.string().optional().describe('(Main group only) JID of the group to send the file to. Defaults to the current group.'),
+  },
+  async (args) => {
+    // Normalize: strip /workspace/group/ prefix if provided, keep relative
+    let filePath = args.file_path;
+    const workspaceGroupPrefix = '/workspace/group/';
+    if (filePath.startsWith(workspaceGroupPrefix)) {
+      filePath = filePath.slice(workspaceGroupPrefix.length);
+    } else if (filePath.startsWith('/')) {
+      return {
+        content: [{ type: 'text' as const, text: `Invalid path: "${args.file_path}". File must be inside /workspace/group/.` }],
+        isError: true,
+      };
+    }
+
+    const targetJid = isMain && args.target_jid ? args.target_jid : chatJid;
+
+    const data = {
+      type: 'send_file',
+      chatJid: targetJid,
+      filePath,
+      filename: args.filename,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    };
+
+    writeIpcFile(TASKS_DIR, data);
+
+    return {
+      content: [{ type: 'text' as const, text: `File send requested: ${filePath}` }],
+    };
+  },
+);
+
+server.tool(
+  'add_reaction',
+  `Add an emoji reaction to a message in the chat. Works on channels that support reactions (e.g., Discord).
+
+The message_id is the ID of the message to react to. You can find message IDs in the conversation context (they appear as numeric strings for Discord messages).
+
+Examples of emoji: "👍", "❤️", "😂", "🎉", "✅", "🔥"`,
+  {
+    message_id: z.string().describe('The ID of the message to react to'),
+    emoji: z.string().describe('The emoji to react with (e.g., "👍", "❤️", "🎉")'),
+    target_jid: z.string().optional().describe('(Main group only) JID of the group. Defaults to the current group.'),
+  },
+  async (args) => {
+    const targetJid = isMain && args.target_jid ? args.target_jid : chatJid;
+
+    const data = {
+      type: 'add_reaction',
+      chatJid: targetJid,
+      messageId: args.message_id,
+      emoji: args.emoji,
+      groupFolder,
+      timestamp: new Date().toISOString(),
+    };
+
+    writeIpcFile(TASKS_DIR, data);
+
+    return {
+      content: [{ type: 'text' as const, text: `Reaction ${args.emoji} queued for message ${args.message_id}.` }],
+    };
+  },
+);
+
 // Start the stdio transport
 const transport = new StdioServerTransport();
 await server.connect(transport);

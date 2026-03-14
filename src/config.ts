@@ -11,13 +11,15 @@ const envConfig = readEnvFile([
   'ASSISTANT_HAS_OWN_NUMBER',
   'TELEGRAM_BOT_TOKEN',
   'TELEGRAM_ONLY',
+  'DISCORD_BOT_TOKEN',
+  'DISCORD_ONLY',
+  'DISCORD_BOTS',
 ]);
 
 export const ASSISTANT_NAME =
   process.env.ASSISTANT_NAME || envConfig.ASSISTANT_NAME || 'Andy';
 export const ASSISTANT_HAS_OWN_NUMBER =
-  (process.env.ASSISTANT_HAS_OWN_NUMBER ||
-    envConfig.ASSISTANT_HAS_OWN_NUMBER) === 'true';
+  (process.env.ASSISTANT_HAS_OWN_NUMBER || envConfig.ASSISTANT_HAS_OWN_NUMBER) === 'true';
 export const POLL_INTERVAL = 2000;
 export const SCHEDULER_POLL_INTERVAL = 60000;
 
@@ -48,7 +50,10 @@ export const CONTAINER_MAX_OUTPUT_SIZE = parseInt(
   10,
 ); // 10MB default
 export const IPC_POLL_INTERVAL = 1000;
-export const IDLE_TIMEOUT = parseInt(process.env.IDLE_TIMEOUT || '1800000', 10); // 30min default — how long to keep container alive after last result
+export const IDLE_TIMEOUT = parseInt(
+  process.env.IDLE_TIMEOUT || '1800000',
+  10,
+); // 30min default — how long to keep container alive after last result
 export const MAX_CONCURRENT_CONTAINERS = Math.max(
   1,
   parseInt(process.env.MAX_CONCURRENT_CONTAINERS || '5', 10) || 5,
@@ -73,3 +78,37 @@ export const TELEGRAM_BOT_TOKEN =
   process.env.TELEGRAM_BOT_TOKEN || envConfig.TELEGRAM_BOT_TOKEN || '';
 export const TELEGRAM_ONLY =
   (process.env.TELEGRAM_ONLY || envConfig.TELEGRAM_ONLY) === 'true';
+
+// Discord configuration
+export const DISCORD_BOT_TOKEN =
+  process.env.DISCORD_BOT_TOKEN || envConfig.DISCORD_BOT_TOKEN || '';
+export const DISCORD_ONLY =
+  (process.env.DISCORD_ONLY || envConfig.DISCORD_ONLY) === 'true';
+
+// Multi-bot Discord configuration
+// Format: DISCORD_BOTS=name1:token1,name2:token2
+// When set, each bot gets JIDs in dc:BOTNAME:CHANNEL_ID format.
+// DISCORD_BOT_TOKEN (single-bot legacy) is ignored when DISCORD_BOTS is set.
+export interface DiscordBotConfig {
+  name: string;
+  token: string;
+}
+
+function parseDiscordBots(raw: string): DiscordBotConfig[] {
+  if (!raw.trim()) return [];
+  return raw
+    .split(',')
+    .map((entry) => {
+      const colonIdx = entry.indexOf(':');
+      if (colonIdx === -1) return null;
+      return {
+        name: entry.slice(0, colonIdx).trim(),
+        token: entry.slice(colonIdx + 1).trim(),
+      };
+    })
+    .filter((b): b is DiscordBotConfig => b !== null && b.name.length > 0 && b.token.length > 0);
+}
+
+export const DISCORD_BOTS: DiscordBotConfig[] = parseDiscordBots(
+  process.env.DISCORD_BOTS || envConfig.DISCORD_BOTS || '',
+);
